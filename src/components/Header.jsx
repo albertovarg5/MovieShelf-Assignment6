@@ -1,15 +1,16 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Header({ onSearch }) {
   const [query, setQuery] = useState('');
+  const navigate = useNavigate();
 
   function handleSearch(event) {
     event.preventDefault();
-
     if (onSearch) {
       onSearch(query.trim());
+      navigate('/');
     }
   }
 
@@ -22,6 +23,7 @@ function Header({ onSearch }) {
 
         <nav className="nav-links">
           <Link to="/" className="nav-link">Home</Link>
+          <Link to="/watchlist" className="nav-link">Watchlist</Link>
           <Link to="/favorites" className="nav-link">Favorites</Link>
         </nav>
 
@@ -44,3 +46,4 @@ function Header({ onSearch }) {
 }
 
 export default Header;
+

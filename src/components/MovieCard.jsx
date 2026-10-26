@@ -1,11 +1,16 @@
 
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useMovies } from '../contexts/MovieContext';
 
 const FAVORITES_KEY = 'movieshelf-favorites';
 
 function getFavorites() {
   try {
-    return JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+    const saved = JSON.parse(
+      localStorage.getItem(FAVORITES_KEY) || '[]'
+    );
+    return Array.isArray(saved) ? saved : [];
   } catch {
     return [];
   }
@@ -14,25 +19,46 @@ function getFavorites() {
 function MovieCard({ movie }) {
   const [isFavorite, setIsFavorite] = useState(false);
 
+  const {
+    addToWatchlist,
+    removeFromWatchlist,
+    isInWatchlist
+  } = useMovies();
+
+  const inWatchlist = isInWatchlist(movie.id);
+
   useEffect(() => {
-    const favorites = getFavorites();
-    setIsFavorite(favorites.some((item) => item.id === movie.id));
+    setIsFavorite(
+      getFavorites().some(item => item.id === movie.id)
+    );
   }, [movie.id]);
 
   function toggleFavorite() {
     const favorites = getFavorites();
 
     const updated = isFavorite
-      ? favorites.filter((item) => item.id !== movie.id)
-      : [...favorites, movie];
+      ? favorites.filter(item => item.id !== movie.id)
+      : [...favorites.filter(item => item.id !== movie.id), movie];
 
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
+    localStorage.setItem(
+      FAVORITES_KEY,
+      JSON.stringify(updated)
+    );
+
     setIsFavorite(!isFavorite);
+  }
+
+  function toggleWatchlist() {
+    if (inWatchlist) {
+      removeFromWatchlist(movie.id);
+    } else {
+      addToWatchlist(movie);
+    }
   }
 
   return (
     <div className="movie-card">
-      <div className="movie-poster">
+      <Link to={`/movie/${movie.id}`} className="movie-poster">
         <img
           src={
             movie.poster_path
@@ -41,14 +67,21 @@ function MovieCard({ movie }) {
           }
           alt={movie.title}
         />
-      </div>
+      </Link>
 
       <div className="movie-info">
-        <h3 className="movie-title">{movie.title}</h3>
+        <Link
+          to={`/movie/${movie.id}`}
+          className="movie-title-link"
+        >
+          <h3 className="movie-title">{movie.title}</h3>
+        </Link>
 
         <div className="movie-details">
           <span className="movie-rating">
-            ⭐ {movie.vote_average?.toFixed(1) ?? 'N/A'}
+            ⭐ {typeof movie.vote_average === 'number'
+              ? movie.vote_average.toFixed(1)
+              : 'N/A'}
           </span>
 
           <span className="movie-year">
@@ -58,17 +91,33 @@ function MovieCard({ movie }) {
           </span>
         </div>
 
-        <button
-          className="favorite-button"
-          onClick={toggleFavorite}
-        >
-          {isFavorite ? '♥ Remove Favorite' : '♡ Add to Favorites'}
-        </button>
+        <div className="movie-actions">
+          <button
+            type="button"
+            className="favorite-button"
+            onClick={toggleFavorite}
+          >
+            {isFavorite
+              ? '♥ Remove Favorite'
+              : '♡ Add to Favorites'}
+          </button>
+
+          <button
+            type="button"
+            className="watchlist-button"
+            onClick={toggleWatchlist}
+          >
+            {inWatchlist
+              ? '✓ Remove from Watchlist'
+              : '+ Add to Watchlist'}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
 export default MovieCard;
+
 
 
